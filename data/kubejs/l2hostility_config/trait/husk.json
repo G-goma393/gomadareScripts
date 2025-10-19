@@ -1,12 +1,7 @@
 {
   "traits": [
     {
-      "trait": "gomadare:thornmail_armor",
-      "chance": 0.3,
-      "min_level": 0
-    },
-    {
-      "trait": "gomadare:thornmail_reflect",
+      "trait": "gomadare:thornmail",
       "chance": 0.3,
       "min_level": 0
     }

@@ -1,32 +1,42 @@
-// L2Hostilityのグローバルな攻撃リスナーを登録
-L2Hostility.newAttackListener()
-// .subscribeDamage() は「Mobがダメージを受けた時」に常時実行される
-.subscribeDamage(e => {
-    try {
-        const target = e.getAttackTarget(); // ダメージを受けたMob
-        const sourceEvent = e.getLivingDamageEvent(); // 元々のダメージイベント
-        const source = sourceEvent.getSource(); // ダメージソース
+(function() {
+  var mob, sourceEvent, source, cap, reflectDamage, attacker;
 
-        // MobのL2Hostility情報を取得
-        const cap = L2Hostility.of(target);
-        if (cap == null) return; // L2H対象外なら終了
+  L2Hostility.newAttackListener()
+    .subscribeDamage(e => {
+      try {
+        // --- 1. ダメージを受けたMobを取得 ---
+        mob = e.getAttackTarget();
+        if (mob == null) return;
 
-        // Mobが 'gomadare:thornmail_reflect' 特性を持っているか確認
-        if (cap.getTraitLevel("gomadare:thornmail_reflect") > 0) {
+        // --- 2. 攻撃者エンティティを「e」から直接取得 ---
+        attacker = e.getAttacker();
 
-            // 攻撃者がプレイヤーで、かつ物理攻撃の場合のみ
-            if (source.isPlayer() && sourceEvent.isPhysical()) {
-                const reflectDamage = 2.0; // 1ハート分の反射ダメージ
-                const attacker = source.getEntity(); // 攻撃者(プレイヤー)
+        // --- 3. 攻撃者が存在し、かつプレイヤーであるか ---
+        if (attacker && attacker.isPlayer()) {
+          
+          // --- 4. 'source' を正しく取得 ---
+          sourceEvent = e.getLivingDamageEvent();
+          source = sourceEvent.getSource(); // 'sourceEvent' から 'source' を取得
 
-if (attacker) {
-    // 攻撃者に「Thorns(棘)」属性の反射ダメージを与える
-    attacker.attack(target.level.damageSources().thorns(target), reflectDamage);
-}
+          // --- 5. L2Hostilityの関数で「物理攻撃」か判定 (引数を 'source' に修正) ---
+          if (L2Hostility.sourceIs(source, "#forge:direct") || L2Hostility.sourceIs(source, "#minecraft:is_projectile")) {
+            
+            // --- 6. Mobが特性を持っているか確認 ---
+            cap = L2Hostility.of(mob);
+            if (cap == null) return;
+
+            if (cap.getTraitLevel("gomadare:thornmail") > 0) {
+              reflectDamage = 2.0;
+              
+              // --- 7. 反射ダメージを実行 ---
+              attacker.attack(mob.level.damageSources().thorns(mob), reflectDamage);
             }
+          }
         }
-    } catch (ex) {
-        console.log("Error in gomadare:thornmail_reflect logic: " + ex);
-    }
-})
-.register(10000); // 優先度 (exampleのまま)
+      } catch (ex) {
+        console.log("Error in gomadare:thornmail logic: ".concat(ex));
+      }
+    })
+    .register(10000);
+
+})();
