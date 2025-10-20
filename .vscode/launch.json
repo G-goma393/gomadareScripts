@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "cwd": "/run/user/1000/kio-fuse-JgKtjc/sftp/gateway.edu.tuis.ac.jp/home/student/j25144kh/Linux/c",
+      "program": "/run/user/1000/kio-fuse-JgKtjc/sftp/gateway.edu.tuis.ac.jp/home/student/j25144kh/Linux/c/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
