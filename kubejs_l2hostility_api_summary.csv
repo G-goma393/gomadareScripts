@@ -1,0 +1,45 @@
+カテゴリ,ファイル/場所,API / コード例,注意点 / 判明した仕様
+特性のアイテム登録,startup_scripts/your_script.js,"StartupEvents.registry('item', e => {
+  e.create('gomadare:thornmail', 'trait');
+});",特性ロジックとは別に、アイテムそのものを登録する必要があります。
+特性のロジック登録 (基本),startup_scripts/your_script.js,"StartupEvents.registry('l2hostility:trait', e => {
+  e.create('gomadare:thornmail', 'basic');
+});",アイテムと「同じID」で「ガワ」となる特性を登録必須。ないとインベントリ表示でクラッシュします。
+特性のロジック登録 (ステータス),startup_scripts/your_script.js,"e.create('gomadare:thornmail_armor', 'attribute')
+  .attribute('bonus_id', 'minecraft:generic.armor', 4.0, 'addition');",ステータス補正を簡単に追加できます。ただし、これをアイテムIDと分ける場合、表示が複数になります。
+特性ロジックの統合 (推奨),startup_scripts/your_script.js,"e.create('gomadare:thornmail', 'attribute')
+  .attribute('bonus_id', 'minecraft:generic.armor', 4.0, 'addition');",アイテムIDと同じIDで 'attribute' タイプを登録し、「ガワ」と「ステータス補正」を1つに統合するのがクリーンです。
+特性アイテムのタグ付け,server_scripts/your_tags.js,"ServerEvents.tags('item', event => {
+  event.add('l2hostility:trait_item', 'gomadare:thornmail');
+});",これを忘れると、アイテムが特性としてL2Hostilityに認識されません。
+特性の基本設定 (JSON),kubejs/data/gomadare/l2hostility_config/trait/thornmail.json,"{
+  ""cost"": 30,
+  ""max_rank"": 1,
+  ""min_level"": 0,
+  ""weight"": 80
+}",特性アイテムに対応する設定ファイル。'namespace' (gomadare) をパスに含める必要があります。
+Mobへの特性割り当て (JSON),kubejs/data/gomadare/l2hostility/mob_traits/husk.json,"{
+  ""traits"": [
+    {
+      ""trait"": ""gomadare:thornmail"",
+      ""chance"": 0.3,
+      ""min_level"": 0
+    }
+  ]
+}",どのMobにどの特性IDを付与するか定義します。'namespace' (gomadare) をパスに含める必要があります。
+動的ロジックの実装 (基本),server_scripts/your_logic.js,"L2Hostility.newAttackListener()
+  .subscribeDamage(e => { ... })
+  .register(10000);",ダメージイベントなどをリッスンする際の基本構造です。
+動的ロジックの実装 (変数宣言の癖),server_scripts/your_logic.js,"(function() {
+  var mob, attacker, source; // 事前宣言
+  L2Hostility.newAttackListener()...
+    mob = e.getAttackTarget(); // 代入
+})();",【最重要】イベント内で 'const' や 'let' を使うと「再宣言」エラーで停止します。IIFEと 'var' で回避必須です。
+API: 攻撃者・被害者の取得,server_scripts/your_logic.js (subscribeDamage内),"var mob = e.getAttackTarget();
+var attacker = e.getAttacker();",イベントオブジェクト 'e' から直接取得するのが正解でした。
+API: プレイヤー判定,server_scripts/your_logic.js (subscribeDamage内),if (attacker && attacker.isPlayer()) { ... },取得したエンティティオブジェクトの '.isPlayer()' メソッドを使います。
+API: ダメージタイプの判定,server_scripts/your_logic.js (subscribeDamage内),"var source = e.getLivingDamageEvent().getSource();
+if (L2Hostility.sourceIs(source, ""#forge:direct"")) { ... }",'source.isPhysical()' などはエラーになります。'L2Hostility.sourceIs()' ヘルパー関数を使うのが正解です。
+API: ダメージタイプの種類,server_scripts/your_logic.js,"""#forge:direct"" (近接)
+""#minecraft:is_projectile"" (投擲物)",これらを組み合わせることで「物理攻撃」を判定できました。
+言語ファイル (説明文),kubejs/assets/gomadare/lang/en_us.json,"""trait.gomadare.thornmail.desc"": ""Description""",キーは '.description' ではなく '**.desc**' でした。
